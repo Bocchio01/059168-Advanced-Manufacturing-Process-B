@@ -27,7 +27,7 @@ calibrate_efficiency = true;
 graph = true * [0 0 1 1 1];
 
 eta_guess = 0.01:0.01:1;
-resolution = 5;
+resolution = 1;
 scale_factor = 1e-6;
 
 % Material properties: Paint coating
@@ -200,6 +200,10 @@ end
 
 
 %% Temperature distribution, T(space, depth)
+
+reset(0);
+set(0, 'DefaultFigureNumberTitle', 'off');
+set(0, 'DefaultFigureWindowStyle', 'docked');
 
 if graph(1)
 

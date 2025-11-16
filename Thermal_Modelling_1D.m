@@ -2,7 +2,7 @@
 %
 % Simulates 1D pure conduction heat transfer under a laser thermal pulse.
 % The thermal model adopted is: Motionless Extended Planar Heat Source.
-% 
+%
 % Assumptions:
 % - Workpiece
 %   - Ti constant
@@ -13,7 +13,7 @@
 %   - 1D semi-infinite (material dimension >= thermal length)
 % - Mechanism
 %   - Pure conduction
-% 
+%
 % Author: Tommaso Bocchietti
 % Date: 15/10/2023
 %
@@ -33,6 +33,14 @@ close all
 
 % Material names
 materialNames = {'Steel', 'Wood_Oak'};
+materialNames = {
+    'Brass', ...
+    'Concrete', ...
+    'Glass', ...
+    'Lead', ...
+    'PVC_Polyvinyl_Chloride', ...
+    'Wood_Oak'
+    };
 
 % Load thermal properties from an external file
 thermalProperties = table2struct(readtable('Thermal-Properties.xlsx'));
@@ -67,7 +75,7 @@ DT = @(x, t, alpha, k) laserPower * thermalDistance(alpha, t) / k * ierfc(x / th
 
 for material = materialNames
     materialIndex = find(strcmp({thermalProperties.Material}, material));
-    
+
     Cp = thermalProperties(materialIndex).Specific_Heat_Capacity_J__kgC_;
     K = thermalProperties(materialIndex).Thermal_Conductivity_W__mC_;
     Rho = thermalProperties(materialIndex).Density_kg__m3_;
@@ -91,6 +99,10 @@ end
 
 %% Plots
 
+reset(0);
+set(0, 'DefaultFigureNumberTitle', 'off');
+set(0, 'DefaultFigureWindowStyle', 'docked');
+
 for material = materialNames
     temperatureData = materialData.(material{1});
 
@@ -101,17 +113,23 @@ for material = materialNames
     legendEntries = cell(1, length(timeIndices));
 
     for i = 1:length(timeIndices)
-        plot(depthVec, temperatureData(timeIndices(i), :), "LineWidth", 2);
+        plot(depthVec(1:25) * 1e3, temperatureData(timeIndices(i), 1:25), "LineWidth", 2);
         legendEntries{i} = ['Time ' num2str(timeVec(timeIndices(i)) * 1e6, '%.2f') ' \mu s'];
     end
 
-    xlabel('Depth (m)');
+    xlabel('Depth (mm)');
     ylabel('Temperature (°C)');
-    title(['Temperature Profile in ' material{1}]);
+    title(['Temperature Profile in ' replace(material{1}, '_', ' ')]);
 
     legend(legendEntries, 'Location', 'Best');
     grid on
+end
 
+
+figure;
+hold on
+for material = materialNames
+    temperatureData = materialData.(material{1});
 
     nexttile;
     hold on
@@ -120,12 +138,12 @@ for material = materialNames
 
     for i = 1:length(depthIndices)
         plot(timeVec * 1e6, temperatureData(:, depthIndices(i)), "LineWidth", 2);
-        legendEntries{i} = ['Depth ' num2str(depthVec(depthIndices(i)), 2) ' m'];
+        legendEntries{i} = ['Depth ' num2str(depthVec(depthIndices(i)) * 1e3, 2) ' mm'];
     end
 
     xlabel('Time (\mu s)');
     ylabel('Temperature (°C)');
-    title(['Temperature Profile in ' material{1}]);
+    title(['Temperature Profile in ' replace(material{1}, '_', ' ')]);
 
     legend(legendEntries, 'Location', 'Best');
     grid on
@@ -139,13 +157,30 @@ i = 1;
 for material = materialNames
     temperatureData = materialData.(material{1});
     plot(timeVec * 1e6, temperatureData(:,1), "LineWidth", 2);
-    legendEntries{i} = material{1};
+    legendEntries{i} = replace(material{1}, '_', ' ');
     i = i+1;
 end
 
 xlabel('Time (\mu s)');
 ylabel('Temperature (°C)');
-title(['Temperature Profile comparison @depth=' num2str(depthVec(1), 2) ' m']);
+title(['Temperature Profile comparison @depth=' num2str(depthVec(1) * 1e3, 2) ' mm']);
 legend(legendEntries, 'Location', 'Best');
 grid on
 
+
+figure;
+hold on
+for material = materialNames
+    temperatureData = materialData.(material{1});
+
+    [T_mesh, X_mesh] = meshgrid(timeVec*1e6, depthVec*1e3);
+    nexttile;
+    surf(T_mesh', X_mesh', temperatureData, 'EdgeColor', 'none');
+    colorbar;
+    xlabel('Time (\mus)');
+    ylabel('Depth (mm)');
+    zlabel('Temperature (°C)');
+    title(['1D Temperature Distribution in ' replace(material{1}, '_', ' ')]);
+    view(45, 30);
+    grid on;
+end
